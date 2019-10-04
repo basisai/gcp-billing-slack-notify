@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gcp-billing-slack-notify.fullname" . }}
+  labels:
+{{ include "gcp-billing-slack-notify.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "gcp-billing-slack-notify.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
