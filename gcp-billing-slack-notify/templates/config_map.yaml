@@ -17,5 +17,5 @@ metadata:
     {{- end }}
   {{- end }}
 data:
-  gcp_billing_account_id: {{ .Values.gcp_billing_account_id }}
-  gcp_project_ids: {{ .Values.gcp_project_ids }}
+  gcp_billing_account_id: {{ required "GCP service account key for BigQuery" .Values.gcp_billing_account_id | quote }}
+  gcp_project_ids: {{ required "GCP service account key for BigQuery" .Values.gcp_project_ids | quote }}

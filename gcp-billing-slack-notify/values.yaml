@@ -13,6 +13,12 @@ image:
   tag: 0.1
   pullPolicy: IfNotPresent
 
+gcp_billing_account_id: ""
+gcp_project_ids: ""
+secrets:
+  gcp_sa_key: ""
+  slack_webhook: ""
+
 env: {}
 
 nameOverride: ""
@@ -38,9 +44,11 @@ labels:
   cronJob: {}
   pods: {}
   configMap: {}
+  secret: {}
 
 annotations:
   serviceAccount: {}
   cronJob: {}
   pods: {}
   configMap: {}
+  secret: {}
