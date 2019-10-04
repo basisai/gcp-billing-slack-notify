@@ -64,39 +64,37 @@ spec:
                 {{- toYaml .Values.resources.cronJob | nindent 16 }}
               volumeMounts:
                 - name: some-secret
-                  mountPath: /secrets/service_account.json
-                  subPath: service_account.json
+                  mountPath: /secrets
               env:
                 - name: GOOGLE_APPLICATION_CREDENTIALS
                   value: /secrets/service_account.json
                 - name: GCP_BILLING_ACCOUNT_ID
                   valueFrom:
                     configMapKeyRef:
-                      name: config
+                      name: {{ include "gcp-billing-slack-notify.fullname" . }}
                       key: gcp_billing_account_id
                 - name: GCP_PROJECT_IDS
                   valueFrom:
                     configMapKeyRef:
-                      name: config
+                      name: {{ include "gcp-billing-slack-notify.fullname" . }}
                       key: gcp_project_ids
                 - name: SLACK_WEBHOOK
                   valueFrom:
                     secretKeyRef:
-                      name: some-secret
+                      name: {{ include "gcp-billing-slack-notify.fullname" . }}
                       key: slack_webhook
                 {{- if .Values.env }}
                 {{- toYaml .Values.env | nindent 16 }}
                 {{- end }}
           volumes:
-            - name: config
-              configMap:
-                name: {{ include "gcp-billing-slack-notify.fullname" . }}
             - name: some-secret
               secret:
                 secretName: {{ include "gcp-billing-slack-notify.fullname" . }}
                 items:
                   - key: service_account.json
+                    path: service_account.json
                   - key: slack_webhook
+                    path: slack_webhook
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}

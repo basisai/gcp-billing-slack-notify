@@ -97,7 +97,7 @@ def main():
             "ts": time.time()
         })
 
-    _slack_notify(slack_data)
+    _slack_notify(slack_data, webhook_url)
 
     from pprint import pprint
     pprint(slack_data)
