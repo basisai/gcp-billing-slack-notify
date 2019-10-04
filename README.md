@@ -1,8 +1,13 @@
-# gcp-billing-slack-notify
+# GCP Billing Slack Notify
 
 This repository contains the Docker image for running a Python script that notifies via Slack of your GCP spending.
 
 This repository also contains a Helm chart to deploy this as a cron job on a Kubernetes cluster.
+
+### Requirements
+
+- Export billing data to BigQuery: https://cloud.google.com/billing/docs/how-to/export-data-bigquery
+- Slack Incoming Webhook: https://api.slack.com/incoming-webhooks
 
 ### Docker Image
 
