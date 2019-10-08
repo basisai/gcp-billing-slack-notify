@@ -1,0 +1,109 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "gcp-billing-slack-notify.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "gcp-billing-slack-notify.name" . }}
+    helm.sh/chart: {{ include "gcp-billing-slack-notify.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- with .Values.labels.cronJob }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.annotations.cronJob }}
+  annotations:
+    {{- with .Values.annotations.cronJob }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.schedule }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "gcp-billing-slack-notify.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- with .Values.labels.cronJob }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config_map.yaml") . | sha256sum }}
+        {{- with .Values.annotations.cronJob }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      completions: 1
+      parallelism: 1
+      {{- if .Values.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ include "gcp-billing-slack-notify.name" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+            {{- with .Values.labels.pods }}
+            {{- toYaml . | nindent 10 }}
+            {{- end }}
+          annotations:
+            {{- with .Values.annotations.pods }}
+            {{- toYaml . | nindent 10 }}
+            {{- end }}
+        spec:
+          serviceAccountName: {{ include "gcp-billing-slack-notify.fullname" . }}
+          automountServiceAccountToken: true
+          restartPolicy: OnFailure
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              resources:
+                {{- toYaml .Values.resources.cronJob | nindent 16 }}
+              volumeMounts:
+                - name: some-secret
+                  mountPath: /secrets
+              env:
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: /secrets/service_account.json
+                - name: GCP_BILLING_ACCOUNT_ID
+                  valueFrom:
+                    configMapKeyRef:
+                      name: {{ include "gcp-billing-slack-notify.fullname" . }}
+                      key: gcp_billing_account_id
+                - name: GCP_PROJECT_IDS
+                  valueFrom:
+                    configMapKeyRef:
+                      name: {{ include "gcp-billing-slack-notify.fullname" . }}
+                      key: gcp_project_ids
+                - name: SLACK_WEBHOOK
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "gcp-billing-slack-notify.fullname" . }}
+                      key: slack_webhook
+                {{- if .Values.env }}
+                {{- toYaml .Values.env | nindent 16 }}
+                {{- end }}
+          volumes:
+            - name: some-secret
+              secret:
+                secretName: {{ include "gcp-billing-slack-notify.fullname" . }}
+                items:
+                  - key: service_account.json
+                    path: service_account.json
+                  - key: slack_webhook
+                    path: slack_webhook
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+            affinity:
+              {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+            tolerations:
+              {{- toYaml . | nindent 12 }}
+          {{- end }}

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gcp-billing-slack-notify.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "gcp-billing-slack-notify.name" . }}
+    helm.sh/chart: {{ include "gcp-billing-slack-notify.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- with .Values.labels.configMap }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.annotations.configMap }}
+  annotations:
+    {{- with .Values.annotations.configMap }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+data:
+  gcp_billing_account_id: {{ required "GCP service account key for BigQuery" .Values.gcp_billing_account_id | quote }}
+  gcp_project_ids: {{ required "GCP service account key for BigQuery" .Values.gcp_project_ids | quote }}

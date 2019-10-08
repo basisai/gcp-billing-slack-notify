@@ -1,0 +1,54 @@
+# See https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#schedule
+schedule: "0 3 * * *"
+# See https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#concurrency-policy
+concurrencyPolicy: "Allow"
+
+successfulJobsHistoryLimit: "10"
+failedJobsHistoryLimit: "10"
+
+ttlSecondsAfterFinished: 86400
+
+image:
+  repository: basisai/gcp-billing-slack-notify
+  tag: 0.1.1
+  pullPolicy: IfNotPresent
+
+gcp_billing_account_id: ""
+gcp_project_ids: ""
+secrets:
+  gcp_sa_key: ""
+  slack_webhook: ""
+
+env: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources:
+  cronJob:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+labels:
+  serviceAccount: {}
+  cronJob: {}
+  pods: {}
+  configMap: {}
+  secret: {}
+
+annotations:
+  serviceAccount: {}
+  cronJob: {}
+  pods: {}
+  configMap: {}
+  secret: {}
