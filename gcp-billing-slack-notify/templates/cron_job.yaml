@@ -17,7 +17,7 @@ metadata:
     {{- end }}
   {{- end }}
 spec:
-  schedule: {{ .Values.schedule }}
+  schedule: {{ .Values.schedule | quote }}
   concurrencyPolicy: {{ .Values.concurrencyPolicy }}
   successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
   failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
