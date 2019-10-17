@@ -1,9 +1,11 @@
 from google.cloud import bigquery
 
+from terminaltables import AsciiTable
 import google.auth
 import pendulum
 import requests
 
+import itertools
 import json
 import locale
 import os
@@ -22,10 +24,12 @@ def _bq_query(bq_client, billing_account_id, project_id, start_date="2019-09-01"
     query_template = """
     SELECT
       service.description as service,
-      SUM(cost)
-        + SUM(IFNULL((SELECT SUM(credit.amount)
-                      FROM UNNEST(credits) as credit), 0))
-        AS total
+      ROUND(SUM(cost), 3) as cost,
+      ROUND(SUM(IFNULL((SELECT SUM(credit.amount)
+                        FROM UNNEST(credits) as credit), 0)), 3) as credits,
+      ROUND(SUM(cost)
+            + SUM(IFNULL((SELECT SUM(credit.amount)
+                          FROM UNNEST(credits) as credit), 0)), 3) as total
     FROM `billing.gcp_billing_export_v1_{}`
     WHERE _PARTITIONTIME BETWEEN '{}' AND '{}'
       AND project.id = '{}'
@@ -41,6 +45,24 @@ def _bq_query(bq_client, billing_account_id, project_id, start_date="2019-09-01"
     )
 
     return bq_client.query(query)
+
+
+def _tabularize_ascii(rows):
+    table_data = list()
+
+    for row in rows:
+        if len(table_data) == 0:
+            table_data.append([x.upper() for x in row.keys()])
+        table_data.append(row.values())
+
+    for key, rows_iter in itertools.groupby(table_data[1:], key=lambda k: ""):
+        rows = list(rows_iter)
+        table_data.append([key] + [round(sum(r[i] for r in rows), 3) for i in range(1, len(rows[0]))])
+
+    table = AsciiTable(table_data)
+    table.outer_border = False
+    table.inner_footing_row_border = True
+    return "```{}```".format(table.table)
 
 
 def _tabularize(rows):
@@ -77,7 +99,7 @@ def main():
     start_date = pendulum.datetime(year, month, 1)
     end_date = start_date.add(months=1)
     slack_data = {
-        "text": "Current month-to-date GCP spending for {}".format(start_date.format('MMM YYYY')),
+        "text": "*Current month-to-date GCP spending for {}*".format(start_date.format('MMM YYYY')),
         "attachments": []
     }
 
@@ -88,10 +110,11 @@ def main():
                         start_date.to_date_string(),
                         end_date.to_date_string())
 
+        # https://api.slack.com/docs/message-attachments
         slack_data['attachments'].append({
             "title": project_id,
             "title_link": "https://console.cloud.google.com/billing/{}/reports?project={}".format(billing_account_id, project_id),
-            "fields": _tabularize(res),
+            "text": _tabularize_ascii(res),
             "footer": "GCP Billing via BigQuery API",
             "footer_icon": "https://ssl.gstatic.com/pantheon/images/favicon/default.png",
             "ts": time.time()
