@@ -54,7 +54,13 @@ def _tabularize_ascii(rows):
             table_data.append([x.upper() for x in row.keys()])
         table_data.append(row.values())
 
+    for key, rows_iter in itertools.groupby(table_data[1:], key=lambda k: ""):
+        rows = list(rows_iter)
+        table_data.append([key] + [sum(r[i] for r in rows) for i in range(1, len(rows[0]))])
+
     table = AsciiTable(table_data)
+    table.outer_border = False
+    table.inner_footing_row_border = True
     return "```{}```".format(table.table)
 
 
