@@ -62,7 +62,11 @@ def _tabularize_ascii(rows):
     table = AsciiTable(table_data)
     table.outer_border = False
     table.inner_footing_row_border = True
-    return "```{}```".format(table.table)
+
+    if len(table_data) > 0:
+        return "```{}```".format(table.table)
+
+    return "_(no results yet)_"
 
 
 def _tabularize(rows):

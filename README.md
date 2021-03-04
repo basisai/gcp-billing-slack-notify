@@ -12,7 +12,7 @@ This repository also contains a Helm chart to deploy this as a cron job on a Kub
 ### Docker Image
 
 The Docker image is built and published to
-[`basisai/gcp-billing-slack-notify`](https://hub.docker.com/r/basisai/gcp-billing-slack-notify).
+[`quay/basisai/gcp-billing-slack-notify`](https://quay.io/basisai/gcp-billing-slack-notify).
 
 ### Environment variables configuration
 
